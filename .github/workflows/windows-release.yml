@@ -1,0 +1,60 @@
+name: Windows release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows-exe:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Build JAR
+        run: mvn --batch-mode clean package -DskipTests
+
+      - name: Create Windows installer
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          jpackage `
+            --type exe `
+            --input target `
+            --dest dist `
+            --name CalculadoraRaices `
+            --main-jar calculadora-raices-1.0-SNAPSHOT.jar `
+            --main-class com.raicesmultiples.Main `
+            --app-version 1.0.0 `
+            --win-shortcut `
+            --win-menu
+
+      - name: Publish GitHub release
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            dist/CalculadoraRaices-*.exe \
+            --title "Calculadora de raíces $GITHUB_REF_NAME" \
+            --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CalculadoraRaices-Windows
+          path: dist/CalculadoraRaices-*.exe
