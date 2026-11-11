@@ -72,15 +72,28 @@ mvn clean compile
 mvn exec:java
 ```
 
-## Publicar una versión para Windows
+## Publicar una versión portable
 
-El workflow `.github/workflows/windows-release.yml` crea un instalador `.exe`
-cuando se publica un tag con formato `v*`, por ejemplo:
+El workflow `.github/workflows/release.yml` crea paquetes portables con
+`jpackage --type app-image`. El paquete de Windows contiene el `.exe` y su
+runtime Java, por lo que el usuario no necesita instalar Java. Al publicar un
+tag con formato `v*`, por ejemplo:
 
 ```bash
 git tag v1.0.0
 git push origin v1.0.0
 ```
 
-GitHub Actions compila el JAR en Windows, ejecuta `jpackage` y adjunta el
-instalador a una GitHub Release.
+GitHub Actions compila en Windows y Linux, comprime cada aplicación y adjunta
+los siguientes archivos a una GitHub Release:
+
+```text
+CalculadoraRaices-v1.0.0-windows.zip
+CalculadoraRaices-v1.0.0-linux.tar.gz
+```
+
+En Windows, descomprime el ZIP y ejecuta:
+
+```text
+CalculadoraRaices/CalculadoraRaices.exe
+```
